@@ -1,0 +1,161 @@
+using JetBrains.Annotations;
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Controller : MonoBehaviour
+{
+    // Start is called before the first frame update
+    private Animator ani;
+    private Rigidbody2D rg2d;
+    float SpeedDiChuyen;
+    public float MaxSpeedDiChuyen ;
+    public float MaxSpeedChay;
+    public GameObject player;
+    bool StatusVaCham = true;
+    public Transform DoiTuongVongTron; // groundCheck
+    [SerializeField]
+    LayerMask TongHopCacNen; // whatissGround
+    float BanKinhCuaDoiTuongVongTron = .4846153f;//groupraidus 
+    public float SpeedJum ;
+    bool StatusJum2;
+    int SoLanJum ;
+    bool StatusTien;
+    bool StatusLui;
+    bool StatusJumping; // check đang nhảy hay chưa nhảy .
+    
+   
+    
+
+
+    public Joystick joystick;
+    
+    void Start()
+    {
+        
+        ani = player.GetComponent<Animator>();
+        rg2d = player.GetComponent<Rigidbody2D>();
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        StatusVaCham = Physics2D.OverlapCircle(DoiTuongVongTron.position, BanKinhCuaDoiTuongVongTron, TongHopCacNen);
+        if(StatusVaCham)
+        {
+            Debug.Log("** Va Cham  OverlapCircle **");
+            StatusJum2 = false;
+            StatusJumping = false;
+        }
+        Debug.Log( "StatusVaCham ---- > " + StatusVaCham );
+        
+        if (StatusLui == false && StatusTien == false && StatusJumping == false)
+        {
+             Debug.Log("StatusLui:" + StatusLui + "*StatusTien:" + StatusTien + "*StatusJumping:" + StatusJumping);
+            ani.SetInteger("trangthai", 0);
+            SpeedDiChuyen = 0;
+        }
+        Dichuyen(SpeedDiChuyen);
+
+        // -------------> di chuyển bằng joystick Pack <-------------------
+        // đi lùi 
+        if(joystick.Horizontal > -1)
+        {
+            //Debug.Log("toạn độ joystick " + joystick.Horizontal.ToString());
+        }
+        if(joystick.Horizontal < 0 && joystick.Horizontal > -0.5f)
+        {
+            StatusLui = true;
+            SpeedDiChuyen = -MaxSpeedDiChuyen;
+            ani.SetInteger("trangthai", 1);
+            Vector3 scale = player.transform.localScale;
+            scale.x = -0.8f;
+            player.transform.localScale = scale;
+        }
+        
+        if (joystick.Horizontal > 0 && joystick.Horizontal < 0.5f)
+        {
+            // đi tới 
+            StatusTien = true;
+            ani.SetInteger("trangthai", 1);
+            SpeedDiChuyen = MaxSpeedDiChuyen;
+            Vector3 scale = player.transform.localScale;
+            scale.x = 0.8f;
+            player.transform.localScale = scale;
+        }
+        if (joystick.Horizontal < -0.5f)
+        {
+            // chạy lùi
+            SpeedDiChuyen = -MaxSpeedChay;
+            StatusLui = true;
+            ani.SetInteger("trangthai", 3);
+           
+        }
+        if (joystick.Horizontal > 0.5f)
+        {
+            // chạy tới
+            SpeedDiChuyen = MaxSpeedChay;
+            StatusTien = true;
+            ani.SetInteger("trangthai", 3);
+           
+        }
+        if (joystick.Horizontal == 0  )
+        {
+            StatusLui = false;
+            StatusTien = false;
+        }
+    }
+    
+    public void Click_down_Jum()
+    {
+        
+        Jum(SpeedJum);
+        
+
+    }
+   
+   
+    public void Dichuyen(float SpeedDiChuyen1)
+    {
+        rg2d.velocity = new Vector3(SpeedDiChuyen1, rg2d.velocity.y, 0);
+    }
+    public void Jum(float _SpeedJum)
+    {
+        
+        if (StatusVaCham )
+        {
+            Debug.Log("StatusVaCham  " + StatusVaCham + "StatusJumping   " + StatusJumping);
+            
+            ani.SetInteger("trangthai", 2);
+            rg2d.AddForce(new Vector2(rg2d.velocity.x, _SpeedJum));
+            StatusJumping = true;
+            Invoke("JumbDouble", 0);   
+        }
+        if (StatusJum2)
+        {
+            SoLanJum++;
+            Debug.Log("nhay lan 2");
+            ani.SetInteger("trangthai", 2);
+            StatusJumping = true;
+            rg2d.AddForce(new Vector2(rg2d.velocity.x, _SpeedJum));
+            if (SoLanJum == 2)
+            {
+                StatusJum2 = false;
+                SoLanJum = 0;
+            }
+        }
+    }
+    public void JumbDouble()
+    {
+        StatusJum2 = true;
+    }
+    IEnumerator wait(float waitTime)
+    {
+        Debug.Log("chờ " + waitTime + "s");
+        yield return new WaitForSeconds(waitTime);
+    }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        
+    }
+}
